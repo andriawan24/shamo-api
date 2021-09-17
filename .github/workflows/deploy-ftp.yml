@@ -1,0 +1,39 @@
+# This workflow checks out code, performs a Codacy security scan
+# and integrates the results with the
+# GitHub Advanced Security code scanning feature.  For more information on
+# the Codacy security scan action usage and parameters, see
+# https://github.com/codacy/codacy-analysis-cli-action.
+# For more information on Codacy Analysis CLI in general, see
+# https://github.com/codacy/codacy-analysis-cli.
+
+name: Deploy production
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ master ]
+
+jobs:
+  deploy:
+   name: Deploy to dev server
+   runs-on: ubuntu-latest
+   steps:
+    - uses: actions/checkout@v2.1.0
+      with:
+        fetch-depth: 2
+    - name: Install Composer Dependencies
+      run: composer install --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist
+
+    - name: Create zipped vendor directory
+      uses: montudor/action-zip@v0.1.0
+      with:
+        args: zip -qq -r ./vendor.zip ./vendor 
+        
+    - name: FTP-Deploy-Action
+      uses: SamKirkland/FTP-Deploy-Action@3.1.1
+      with:
+        ftp-server: ftp://andriawan24.xyz/
+        ftp-username: cicd@andriawan24.xyz
+        ftp-password: ${{ secrets.FTP_PASSWORD }}
